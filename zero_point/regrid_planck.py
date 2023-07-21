@@ -1,0 +1,60 @@
+from __future__ import print_function
+##############################################################################
+'''
+This script regrid the planck maps
+
+This script requires following functions and files:
+initial_parameter.py
+required_functions.py
+
+To run:
+run regrid_files.py 'Planck Field' 'Field'
+
+Example:
+run regrid_files.py TauLL TauS2
+
+By: Ayushi Singh
+Last Modified: 30 December 2019 
+'''
+##############################################################################
+import numpy as np
+import glob
+import os 
+import sys
+
+# importing other scipts
+from initial_parameter import path_to_folder, regrid_size
+from initial_parameter import tau353GHz, temperature, beta
+import required_functions as rf
+
+main_folder = path_to_folder
+planck_field = sys.argv[1]
+field = sys.argv[2]
+
+data = 'herschel_data'
+data_folder = '{0}/{1}/{2}'.format(main_folder,data,field)
+template_map = sorted(glob.glob('{0}/*{1}.image.fits'.format(data_folder, regrid_size)))[0]
+print ('template map is:', template_map)
+
+tau0 = '{0}/{1}{2}'.format(main_folder,planck_field, tau353GHz)
+T = '{0}/{1}{2}'.format(main_folder,planck_field, temperature)
+Beta = '{0}/{1}{2}'.format(main_folder,planck_field, beta)
+
+temp_map = '{0}/Planck_nomaskedyesthreshold/{1}{2}'.format(main_folder,planck_field,temperature)
+beta_map = '{0}/Planck_nomaskedyesthreshold/{1}{2}'.format(main_folder,planck_field,beta)
+tau_map = '{0}/Planck_nomaskedyesthreshold/{1}{2}'.format(main_folder,planck_field,tau353GHz)
+
+os.system('mkdir {0}/{1}/{2}/Planck_regridded'.format(main_folder,data,field))
+
+temp_name = '{0}/{1}/{2}/Planck_regridded/{2}_temp.resamp.fits'.format(main_folder,data,field)
+os.system('rm {0}'.format(temp_name))
+rf.regrid(temp_map, template_map, resultimage = temp_name)
+
+beta_name = '{0}/{1}/{2}/Planck_regridded/{2}_beta.resamp.fits'.format(main_folder,data,field)
+os.system('rm {0}'.format(beta_name))
+rf.regrid(beta_map, template_map, resultimage = beta_name)
+
+tau_name = '{0}/{1}/{2}/Planck_regridded/{2}_tau353.resamp.fits'.format(main_folder,data,field)
+os.system('rm {0}'.format(tau_name))
+rf.regrid(tau_map, template_map, resultimage = tau_name)
+

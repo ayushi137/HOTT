@@ -1,0 +1,145 @@
+###################################################################################################
+'''
+This script has all the Parameters that can be changed. Read the description below
+for more information.
+
+By: Ayushi Singh
+Last Modified: 18 March 2022
+'''
+###################################################################################################
+# package required 
+import sys
+"""
+Names of files and folder required for 'creating_tau_and_temp.py'
+-----------------------------------------------------------
+field_name : string
+	name of the field
+folder : string
+	path to the directory that contains the data fits files that has already been corrected for offset.
+file160 : string
+	name of 160 micron data file with offset
+file250 : string
+	name of 250 micron data file with offset	
+file350 : string
+	name of 350 micron data file with offset	
+file500 : string
+	name of 500 micron data file with offset
+coverage160 : string
+	name of 160 micron coverage map
+coverage250 : string
+	name of 250 micron coverage map	
+coverage350 : string
+	name of 350 micron coverage map	
+coverage500 : string
+	name of 500 micron coverage map	
+result_folder : string
+	path to the directory that will contain the resulting fits files.
+offset : boolean
+	If True, then use the additional offset stored in stored_offset.py. 	
+offset_file : string
+	path to the file with all the offset values required for the second run. Only needed if offset = True	
+"""	
+
+field_name = sys.argv[1]
+
+#path_to_folder = '/mnt/raid-project/hp/asingh/colden_herschel/colden_project/testing_2020'
+path_to_folder = '/mnt/raid-project/hp/asingh/colden_herschel/colden_project'
+#path_to_folder = '/Users/ayushisingh/Documents/Research/working_scripts/testing_data'
+
+folder = path_to_folder+'/herschel_data/'+field_name+'/'
+
+wavelength = [160, 250, 350, 500]
+
+file160 = folder+'{0}-{1}.offset.fits'.format(field_name, wavelength[0])
+file250 = folder+'{0}-{1}.offset.fits'.format(field_name, wavelength[1])
+file350 = folder+'{0}-{1}.offset.fits'.format(field_name, wavelength[2])
+file500 = folder+'{0}-{1}.offset.fits'.format(field_name, wavelength[3])
+
+coverage160 = folder+'coverage_maps/{0}-{1}.coverage.fits'.format(field_name, wavelength[0])
+coverage250 = folder+'coverage_maps/{0}-{1}.coverage.fits'.format(field_name, wavelength[1])
+coverage350 = folder+'coverage_maps/{0}-{1}.coverage.fits'.format(field_name, wavelength[2])
+coverage500 = folder+'coverage_maps/{0}-{1}.coverage.fits'.format(field_name, wavelength[3])
+
+beta_file = folder+'Planck_regridded/{0}_beta.resamp.fits'.format(field_name)
+temp_file = folder+'Planck_regridded/{0}_temp.resamp.fits'.format(field_name)
+tau_file = folder+'Planck_regridded/{0}_tau353.resamp.fits'.format(field_name)
+
+result_folder = path_to_folder+'/tau_temp/'+field_name+'_0_v5'
+
+offset = False
+offset_file = path_to_folder+'/offset_values/Offset_and_mu_2022-08-17_0_v4.csv'
+
+
+data_files = [file160, file250, file350, file500]	
+coverage_files = [coverage160, coverage250, coverage350, coverage500]	
+
+
+'''
+Constants required for 'sed_fitting_functions.py'
+--------------------------------------------
+nu0 : float
+	The frequency at which the opacity power law is locked in Hz  
+kappa0 : float
+   	The dust opacity at nu0	in cm^2/g
+beta : float
+	Dust emissivity: the spectral index that determines the opacity.      	
+gastodust : float
+    The gas to dust ratio.  The opacity kappa0 is divided by this number to
+    get the opacity of gas.  
+muh2 : float
+	Mean molecular mass of H_2
+convolve_size : int
+	Frequency of required resolutuon map    
+regrid_size : int
+	Frequency of required pixel size map   
+beamsize : dictionary
+	Have the beam size for all the maps based on the wavelenght (in arcsec)
+to_get_errors : dictionary 
+	values needed to get the coverage predicted dispersion uncertainty for the frequency maps
+types_of_errors : dictionary
+	Turning on or off certain type of uncertainties in the pipeline. 
+other_uncertainty : dictionary
+	All the other scources of uncertaitnies other than coverage predicted dispersion uncertainty  
+	undulation: uncertainty due to undulations in the maps [MJy/sr]
+	calibration: uncorrelated calibration uncertainty from beam area [percentage in decimal]
+	corr_cali: correlated calibration uncertainty (gain) [percentage in decimal]
+	ciba: uncertaitny due to Cosmic Microwave Background [MJy/sr]
+'''
+
+nu0= 1000e9 		 					# [Hz] 
+kappa0= 10.0 	 						# [cm^2/g] 
+beta = None
+gastodust = 100	
+muh2=2.8								# [amu]	
+
+convolve_size = 500
+
+regrid_size = 500
+
+beamsize = {'160':12.5,
+			'250':18.4, 
+           	'350':25.2,
+            '500':36.7, 
+            'planck':300.0 
+           }							# [arcsec]
+
+types_of_errors = {'coverageBased': True, 'undulation':True ,'calibration': True, 'corr_cali': True, 'ciba': True, 'astrometric': True}
+
+to_get_errors = {'160':{'sbd_i': 28.5, 'sbd_g': 0.39, 'conv_i': 0.06, 'conv_g': 0.40},
+		 '250':{'sbd_i': 2.86, 'sbd_g': 0.39, 'conv_i': 0.13, 'conv_g': 0.25}, 
+		 '350':{'sbd_i': 1.75, 'sbd_g': 0.39, 'conv_i': 0.25, 'conv_g': 0.38},
+          	 '500':{'sbd_i': 1.00, 'sbd_g': 0.39, 'conv_i': 1.00, 'conv_g': 1.00}, 
+          		}	
+RIF_160 = 1.47
+WN_160 = 0.3
+astrometric_error = 0.07
+
+other_uncertainty = {'160':{'undulation': 0.75, 'calibration': 0.01, 'corr_cali': 0.01, 'ciba': 0.34},
+		     '250':{'undulation': 0.17, 'calibration': 0.01, 'corr_cali': 0.01, 'ciba': 0.30}, 
+		     '350':{'undulation': 0.14, 'calibration': 0.01, 'corr_cali': 0.01, 'ciba': 0.26},
+       		     '500':{'undulation': 0.00, 'calibration': 0.01, 'corr_cali': 0.01, 'ciba': 0.16}, 
+        			}
+
+
+
+		
